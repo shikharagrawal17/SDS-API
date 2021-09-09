@@ -6,6 +6,7 @@ from flask_restful import Api, Resource
 from flask_migrate import Migrate
 import datetime
 import pytz
+import json
 
 
 app = Flask(__name__)
@@ -51,7 +52,7 @@ class SDS_Projects(db.Model):
         project.email_projectHead = email_projectHead
 
     def json(project):
-        return {'Name: ': project.projectName, 'Project Description: ': project.projectDesc, 'MIS: ': project.mis_projectHead, 'Email: ': project.email_projectHead}
+        return {'Name: ': project.projectName, 'Project Description: ': project.projectDesc, 'MIS of Project Head: ': project.mis_projectHead, 'Email of Project Head: ': project.email_projectHead}
 
     def __str__(project):
         return f" Name of Project: {project.name}\nProject Description: {project.desc}\nMIS: {project.mis}\nEmail: {project.email}"
@@ -65,10 +66,10 @@ class SDS_API_History(db.Model):
         history.operation = operation
 
     def json(history):
-        return {'Operation ': history.operation, 'Time ': history.performedOn}
+        return {'Operation ': history.operation}
 
     def __str__(history):
-        return f" Operation Performed: {history.operation}\nPerformed On: {history.performedOn}"
+        return f" Operation Performed: {history.operation}"
 
 db.create_all()
 # member = SDS_Members(name="SHIKHAR", mis=112003005, email="agarawalsd20.comp@coep.ac.in")
@@ -213,7 +214,7 @@ class SDS_Member(Resource):
             history = SDS_API_History(operation="Tried Reading Specific Member Info but Member Not Found")
             db.session.add(history)
             db.session.commit()
-            return "Member not found"
+            return "Member not found", 404
 
     def post(self,name, mis, email):
         member = SDS_Members(name=name, mis=mis, email=email)
@@ -238,7 +239,7 @@ class SDS_Member(Resource):
             history = SDS_API_History(operation="Tried Deleting Specific Member Info but Member Not Found")
             db.session.add(history)
             db.session.commit()
-            return "Member not found"
+            return "Member not found", 404
 
 class SDS_Project(Resource):
     def get(self, projectName, projectDesc, mis_projectHead, email_projectHead):
@@ -253,7 +254,7 @@ class SDS_Project(Resource):
             history = SDS_API_History(operation="Tried Reading Specific Project Info but Project Not Found")
             db.session.add(history)
             db.session.commit()
-            return "Project not found"
+            return "Project not found", 404
 
     def post(self, projectName, projectDesc, mis_projectHead, email_projectHead):
         project = SDS_Projects(projectName=projectName, projectDesc=projectDesc, mis_projectHead=mis_projectHead, email_projectHead=email_projectHead)
@@ -278,7 +279,7 @@ class SDS_Project(Resource):
             history = SDS_API_History(operation="Tried Deleting Specific Project Info but Project Not Found")
             db.session.add(history)
             db.session.commit()
-            return "Project not found"
+            return "Project not found", 404
 
 # class SDS_Alldata(Resource):
 #     def get(self, type):
@@ -314,9 +315,53 @@ class SDS_Project(Resource):
 #             db.session.commit()
 #             return "Data NOT FOUND"
 
+class SDS_Members_Json(Resource):
+    def get(self, type):
+        if type == "members":
+            history = SDS_API_History(operation="Read All Members Info")
+            db.session.add(history)
+            db.session.commit()
+            members =[]
+            member_all = SDS_Members.query.all()
+            for member in member_all:
+                member = member.json()
+                members.append(member)
+            # members = jsonify(members)
+            # print (members)
+            members = json.dumps(members)
+            return f"{members}"
+        elif type == "projects":
+            history = SDS_API_History(operation="Read All Projects Info")
+            db.session.add(history)
+            db.session.commit()
+            projects =[]
+            project_all = SDS_Projects.query.all()
+            for project in project_all:
+                project = project.json()
+                projects.append(project)
+            # members = jsonify(members)
+            # print (members)
+            historys = json.dumps(projects)
+            return f"{projects}"
+        elif type == "historys":
+            historys =[]
+            history_all = SDS_API_History.query.all()
+            for history in history_all:
+                history = history.json()
+                historys.append(history)
+            # members = jsonify(members)
+            # print (members)
+            historys = json.dumps(historys)
+            return f"{historys}"
+        else:
+            history = SDS_API_History(operation="Tried Reading Info But Bad Request")
+            db.session.add(history)
+            db.session.commit()
+            return "Bad Request", 404
+
 api.add_resource(SDS_Member, '/member_json/<string:name>/<int:mis>/<string:email>')
 api.add_resource(SDS_Project, '/project_json/<string:projectName>/<string:projectDesc>/<int:mis_projectHead>/<string:email_projectHead>')
-# api.add_resource(SDS_Alldata, '/<string:type>')
+api.add_resource(SDS_Members_Json, '/<string:type>_json')
 
 if __name__ == "__main__":
     app.run(debug=True)
