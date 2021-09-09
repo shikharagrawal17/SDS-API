@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}
+    <title>SDS All Memeber Info</title>
+{% endblock title %}
+{% block background %}
+
+  <div class="bg-dark p-2 text-dark bg-opacity-25">
+    <div class="container-fluid" style="overflow-x:auto;">
+      <div>
+        <a href="/members/" type="button" class="btn btn-primary">Add new Member</a>
+      </div>
+      {% if get|length == 0 %}
+      <div class="alert alert-danger text-center" role="alert">
+        No Members Found!
+      </div>  
+      {% else %}
+        <table class="table table-dark table-striped">
+          <thead>
+            <tr>
+              <th scope="col">Sr.No.</th>
+              <th scope="col">Name</th>
+              <th scope="col">MIS</th>
+              <th scope="col">Email</th>
+              <th scope="col">Since</th>
+              <th scope="col">Actions</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for members in get %}
+            <tr>
+              <th scope="row">{{loop.index}}</th>
+              <td>{{members.name}}</td>
+              <td>{{members.mis}}</td>
+              <td>{{members.email}}</td>
+              <td>{{members.since}}</td>
+              <td><a href="/members/update/{{members.mis}}" type="button" class="btn btn-outline-info btn-sm mx-1">Update</a></td>
+              <td><a href="/members/delete/{{members.mis}}" type="button" class="btn btn-outline-danger btn-sm mx-1">Delete</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+    </div>
+
+    <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+
+    <!-- Option 2: Separate Popper and Bootstrap JS -->
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js" integrity="sha384-eMNCOe7tC1doHpGoWe/6oMVemdAVTMs2xqW4mwXrXsW0L84Iytr2wi5v2QjrP/xp" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js" integrity="sha384-cn7l7gDp0eyniUwwAZgrzD06kc/tftFf19TOAs2zVinnD/C7E91j9yyk5//jjpt/" crossorigin="anonymous"></script>
+    -->
+  </div>
+        
+{% endblock background %}

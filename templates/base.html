@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <link rel="icon" href="/static/sds.png" type="image/png" sizes="16x16">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    {% block title %}
+        <title>SDS API</title>
+    {% endblock title %}
+    
+</head>
+
+<body class="p-3 mb-2 bg-body text-dark bg-opacity-50">
+    <nav class="navbar navbar-expand-lg navbar-dark p-3 mb-2 bg-body font-weight-bold bg-opacity-25 container-fluid" style="font-family:papyrus; font-weight: bold; font-size: 30px;">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="/">
+            <img src="/static/sds.png" alt="" width="100" height="100" class="d-inline-block align-text-top">
+          </a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="/">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/projects">Projects</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/members">Members</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/history">History</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    {% block background %}
+        
+    {% endblock background %}
+</body>
+</html>
