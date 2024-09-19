@@ -1,0 +1,39 @@
+use bank-app
+db.users.insertMany([
+    {
+        "_id": ObjectId("65123456789abcdef1234567"),
+        "username": "admin",
+        "password": "$2a$12$CqFvvR5jF7Otz.zp9gIZve/1pnTjBLUuHeO.qGRGVPyA9YnvACFwm", 
+        "role": "ADMIN",
+        "accountNumber": "ACC12345",
+        "balance": 10000
+    },
+    {
+        "_id": ObjectId("65123456789abcdef1234568"),
+        "username": "john_doe",
+        "password": "$2a$12$NiOb8Pobxtz/Y6S4KxVhsOnIi6uN4RV.Tn6H3HyPWechFDKpST9Vq", 
+        "role": "USER",
+        "accountNumber": "ACC54321",
+        "balance": 5000
+    }
+])
+
+
+db.transactions.insertMany([
+    {
+        "_id": ObjectId("65123456789abcdef1234569"),
+        "fromAccount": "ACC12345",
+        "toAccount": "ACC54321",
+        "amount": 500,
+        "type": "TRANSFER",
+        "timestamp": new Date("2024-01-01T10:00:00Z")
+    },
+    {
+        "_id": ObjectId("65123456789abcdef1234570"),
+        "fromAccount": "ACC54321",
+        "toAccount": "ACC12345",
+        "amount": 200,
+        "type": "TRANSFER",
+        "timestamp": new Date("2024-01-02T14:30:00Z")
+    }
+])
