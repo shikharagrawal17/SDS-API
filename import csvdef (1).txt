@@ -1,0 +1,59 @@
+import csv
+
+def read_and_sort_csv(file_path, sort_column_index):
+    with open(file_path, mode='r', newline='') as file:
+        reader = csv.reader(file)
+        header = next(reader)
+        rows = list(reader)
+
+    # Sort rows based on the specified column index
+    sorted_rows = sorted(rows, key=lambda x: x[sort_column_index])
+    return header, sorted_rows
+
+def compare_csv(file1, file2, sort_column):
+    header1, sorted_rows1 = read_and_sort_csv(file1, sort_column)
+    header2, sorted_rows2 = read_and_sort_csv(file2, sort_column)
+
+    # Create a result list for differences
+    differences = []
+
+    # Compare rows
+    max_length = max(len(sorted_rows1), len(sorted_rows2))
+
+    for i in range(max_length):
+        row1 = sorted_rows1[i] if i < len(sorted_rows1) else [''] * len(header1)
+        row2 = sorted_rows2[i] if i < len(sorted_rows2) else [''] * len(header2)
+
+        for col_index in range(len(header1)):
+            value1 = row1[col_index] if col_index < len(row1) else ''
+            value2 = row2[col_index] if col_index < len(row2) else ''
+
+            if value1 != value2:
+                differences.append({
+                    'Sort_Value': row1[sort_column],  # Value used for sorting
+                    'Column': header1[col_index],
+                    'File1_Value': value1,
+                    'File2_Value': value2
+                })
+
+    return differences
+
+def save_to_csv(differences, output_file):
+    with open(output_file, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=['Sort_Value', 'Column', 'File1_Value', 'File2_Value'])
+        writer.writeheader()
+        writer.writerows(differences)
+
+if __name__ == "__main__":
+    file1_path = 'path/to/your/first_file.csv'
+    file2_path = 'path/to/your/second_file.csv'
+    sort_column_index = 0  # Change this to the index of your sorting column (0-based)
+    output_file_path = 'differences.csv'  # Output file path
+
+    result = compare_csv(file1_path, file2_path, sort_column_index)
+
+    if result:
+        save_to_csv(result, output_file_path)
+        print(f"Differences found and saved to '{output_file_path}'.")
+    else:
+        print("No differences found.")
