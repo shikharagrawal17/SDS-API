@@ -1,0 +1,61 @@
+import csv
+
+def read_csv(file_path):
+    with open(file_path, mode='r', newline='', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        header = next(reader)
+        data = [row for row in reader]
+    return header, data
+
+def sort_data(data, sort_column_index):
+    return sorted(data, key=lambda x: x[sort_column_index])
+
+def compare_rows(data1, data2, key_column_index):
+    differences = []
+    
+    # Create a dictionary for quick look-up in the second data
+    data2_dict = {row[key_column_index]: row for row in data2}
+
+    for row1 in data1:
+        key_value = row1[key_column_index]
+        if key_value in data2_dict:
+            row2 = data2_dict[key_value]
+            for index in range(len(row1)):
+                if row1[index] != row2[index]:
+                    differences.append({
+                        'key': key_value,
+                        'row1': row1,
+                        'row2': row2,
+                        'column_name': header[index],
+                        'row1_value': row1[index],
+                        'row2_value': row2[index]
+                    })
+
+    return differences
+
+def write_differences_to_csv(differences, output_file):
+    with open(output_file, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['Key', 'Row1', 'Row2', 'Column Name', 'Row1 Value', 'Row2 Value'])
+        for diff in differences:
+            writer.writerow([diff['key'], diff['row1'], diff['row2'], diff['column_name'], diff['row1_value'], diff['row2_value']])
+
+# File paths and column index for sorting
+file1 = 'file1.csv'
+file2 = 'file2.csv'
+output_file = 'differences.csv'
+sort_column_index = 0  # Adjust based on your CSV structure
+
+# Main execution
+header1, data1 = read_csv(file1)
+header2, data2 = read_csv(file2)
+
+# Sort the data
+sorted_data1 = sort_data(data1, sort_column_index)
+sorted_data2 = sort_data(data2, sort_column_index)
+
+# Compare rows and find differences
+differences = compare_rows(sorted_data1, sorted_data2, sort_column_index)
+
+# Write differences to a new CSV file
+write_differences_to_csv(differences, output_file)
