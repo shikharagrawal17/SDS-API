@@ -1,0 +1,51 @@
+import pandas as pd
+
+def compare_csv(file1, file2, sort_column):
+    # Load the CSV files into DataFrames
+    df1 = pd.read_csv(file1)
+    df2 = pd.read_csv(file2)
+
+    # Sort the DataFrames by the specified column
+    df1_sorted = df1.sort_values(by=sort_column).reset_index(drop=True)
+    df2_sorted = df2.sort_values(by=sort_column).reset_index(drop=True)
+
+    # Compare the two DataFrames
+    comparison_result = pd.DataFrame(columns=['Column', 'File1_Value', 'File2_Value'])
+
+    # Get the union of columns from both DataFrames
+    all_columns = set(df1_sorted.columns).union(set(df2_sorted.columns))
+
+    for column in all_columns:
+        # Get values for each DataFrame, using NaN for missing values
+        file1_values = df1_sorted[column] if column in df1_sorted else pd.Series([float('nan')] * len(df1_sorted))
+        file2_values = df2_sorted[column] if column in df2_sorted else pd.Series([float('nan')] * len(df2_sorted))
+
+        # Find differences
+        for i in range(max(len(file1_values), len(file2_values))):
+            value1 = file1_values[i] if i < len(file1_values) else float('nan')
+            value2 = file2_values[i] if i < len(file2_values) else float('nan')
+
+            if value1 != value2:
+                comparison_result = comparison_result.append({
+                    'Column': column,
+                    'File1_Value': value1,
+                    'File2_Value': value2
+                }, ignore_index=True)
+
+    return comparison_result
+
+if __name__ == "__main__":
+    # Set your file paths and column for sorting
+    file1_path = 'path/to/your/first_file.csv'
+    file2_path = 'path/to/your/second_file.csv'
+    sort_column_name = 'your_sort_column'  # Change to your sorting column name
+
+    # Compare the CSV files
+    result = compare_csv(file1_path, file2_path, sort_column_name)
+
+    # Output the result
+    if not result.empty:
+        print("Differences found:")
+        print(result)
+    else:
+        print("No differences found.")
