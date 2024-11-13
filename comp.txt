@@ -1,0 +1,90 @@
+import java.io.*;
+import java.util.*;
+
+public class FileComparer {
+
+    public static void main(String[] args) {
+        String file1Path = "file1.txt";
+        String file2Path = "file2.txt";
+        String outputPath = "output.txt";
+        
+        try {
+            List<String> file1Lines = readFile(file1Path);
+            List<String> file2Lines = readFile(file2Path);
+            
+            Set<String> file1Set = new HashSet<>(file1Lines);
+            Set<String> file2Set = new HashSet<>(file2Lines);
+            
+            BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath));
+            
+            for (String line : file1Set) {
+                if (file2Set.contains(line)) {
+                    // Exact match; do nothing
+                } else {
+                    // Check for partial match in file2
+                    String comment = findPartialMatch(line, file2Set);
+                    writer.write(line + " | COMMENT: " + comment);
+                    writer.newLine();
+                }
+            }
+            
+            // Check lines that are in file2 but not in file1
+            for (String line : file2Set) {
+                if (!file1Set.contains(line)) {
+                    // Unique to file2
+                    writer.write(line + " | COMMENT: Exists only in file2");
+                    writer.newLine();
+                }
+            }
+            
+            writer.close();
+            System.out.println("Comparison completed. Check output.txt for results.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private static List<String> readFile(String filePath) throws IOException {
+        List<String> lines = new ArrayList<>();
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
+        String line;
+        while ((line = reader.readLine()) != null) {
+            lines.add(line);
+        }
+        reader.close();
+        return lines;
+    }
+    
+    private static String findPartialMatch(String line, Set<String> fileSet) {
+        String[] columns = line.split("\\|~\\|");
+        int maxMatchCount = 0;
+        String bestMatchLine = null;
+        List<Integer> unmatchedColumns = new ArrayList<>();
+
+        for (String otherLine : fileSet) {
+            String[] otherColumns = otherLine.split("\\|~\\|");
+            if (columns.length != otherColumns.length) continue;
+
+            int matchCount = 0;
+            unmatchedColumns.clear();
+            for (int i = 0; i < columns.length; i++) {
+                if (columns[i].equals(otherColumns[i])) {
+                    matchCount++;
+                } else {
+                    unmatchedColumns.add(i + 1);
+                }
+            }
+            
+            if (matchCount > maxMatchCount) {
+                maxMatchCount = matchCount;
+                bestMatchLine = otherLine;
+            }
+        }
+
+        if (bestMatchLine != null && maxMatchCount >= (columns.length / 2)) {
+            return "Partial match with missing columns: " + unmatchedColumns;
+        } else {
+            return "Exists only in file1";
+        }
+    }
+}
