@@ -61,14 +61,22 @@ public class FileComparerWithDealNumber {
         Map<String, String[]> data = new HashMap<>();
         BufferedReader reader = new BufferedReader(new FileReader(filePath));
         String line;
-        
+
         // Read header line to skip it
         String headerLine = reader.readLine();
         
         while ((line = reader.readLine()) != null) {
             String[] columns = line.split("\\|~\\|");
-            String dealNumber = columns[0];  // Assuming Deal Number is the first column
-            data.put(dealNumber, Arrays.copyOfRange(columns, 1, columns.length));
+            if (columns.length < 3) continue; // Skip lines without a third column (Deal number)
+            
+            String dealNumber = columns[2];  // Assuming Deal Number is the third column
+            String[] remainingColumns = new String[columns.length - 1];
+
+            // Combine columns excluding the Deal Number (third column)
+            System.arraycopy(columns, 0, remainingColumns, 0, 2); // First two columns
+            System.arraycopy(columns, 3, remainingColumns, 2, columns.length - 3); // Remaining columns
+
+            data.put(dealNumber, remainingColumns);
         }
         reader.close();
         return data;
@@ -82,7 +90,7 @@ public class FileComparerWithDealNumber {
             if (columns1[i].equals(columns2[i])) {
                 matchCount++;
             } else {
-                unmatchedColumns.add(i + 2); // +2 because index 0 is Deal Number, and we're shifting by 1
+                unmatchedColumns.add(i + 1); // Adjust index (exclude Deal number)
             }
         }
 
