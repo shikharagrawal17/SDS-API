@@ -1,0 +1,94 @@
+import java.io.*;
+import java.util.*;
+
+public class FileComparerWithDealNumber {
+
+    public static void main(String[] args) {
+        String file1Path = "file1.txt";
+        String file2Path = "file2.txt";
+        String outputPath = "output.txt";
+
+        try {
+            Map<String, String[]> file1Data = readFileWithDealNumber(file1Path);
+            Map<String, String[]> file2Data = readFileWithDealNumber(file2Path);
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath));
+
+            // Get sorted lists of Deal numbers
+            List<String> file1DealNumbers = new ArrayList<>(file1Data.keySet());
+            List<String> file2DealNumbers = new ArrayList<>(file2Data.keySet());
+            Collections.sort(file1DealNumbers);
+            Collections.sort(file2DealNumbers);
+
+            Set<String> allDealNumbers = new HashSet<>(file1DealNumbers);
+            allDealNumbers.addAll(file2DealNumbers);
+
+            // Write header to output file
+            writer.write("Deal Number | Data | Comment");
+            writer.newLine();
+
+            // Compare each deal number
+            for (String dealNumber : allDealNumbers) {
+                String[] file1Columns = file1Data.get(dealNumber);
+                String[] file2Columns = file2Data.get(dealNumber);
+
+                if (file1Columns != null && file2Columns != null) {
+                    // Both files have this deal number
+                    String comment = compareColumns(file1Columns, file2Columns);
+                    if (!comment.isEmpty()) {
+                        writer.write(dealNumber + " | " + String.join(" |~| ", file1Columns) + " | COMMENT: " + comment);
+                        writer.newLine();
+                    }
+                } else if (file1Columns != null) {
+                    // Deal number only in file1
+                    writer.write(dealNumber + " | " + String.join(" |~| ", file1Columns) + " | COMMENT: Exists only in file1");
+                    writer.newLine();
+                } else {
+                    // Deal number only in file2
+                    writer.write(dealNumber + " | " + String.join(" |~| ", file2Columns) + " | COMMENT: Exists only in file2");
+                    writer.newLine();
+                }
+            }
+
+            writer.close();
+            System.out.println("Comparison completed. Check output.txt for results.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Map<String, String[]> readFileWithDealNumber(String filePath) throws IOException {
+        Map<String, String[]> data = new HashMap<>();
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
+        String line;
+        
+        // Read header line to skip it
+        String headerLine = reader.readLine();
+        
+        while ((line = reader.readLine()) != null) {
+            String[] columns = line.split("\\|~\\|");
+            String dealNumber = columns[0];  // Assuming Deal Number is the first column
+            data.put(dealNumber, Arrays.copyOfRange(columns, 1, columns.length));
+        }
+        reader.close();
+        return data;
+    }
+
+    private static String compareColumns(String[] columns1, String[] columns2) {
+        List<Integer> unmatchedColumns = new ArrayList<>();
+        int matchCount = 0;
+
+        for (int i = 0; i < columns1.length; i++) {
+            if (columns1[i].equals(columns2[i])) {
+                matchCount++;
+            } else {
+                unmatchedColumns.add(i + 2); // +2 because index 0 is Deal Number, and we're shifting by 1
+            }
+        }
+
+        if (matchCount >= columns1.length / 2) {
+            return "Partial match with missing columns: " + unmatchedColumns;
+        }
+        return "";
+    }
+}
