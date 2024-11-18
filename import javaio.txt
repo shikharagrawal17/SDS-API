@@ -1,0 +1,78 @@
+import java.io.*;
+import java.nio.file.*;
+import java.security.*;
+import java.util.*;
+
+public class FolderComparator {
+
+    public static void main(String[] args) {
+        String folderPath1 = "path/to/first/folder";
+        String folderPath2 = "path/to/second/folder";
+
+        try {
+            Map<String, String> folder1Files = getFilesWithHashes(folderPath1);
+            Map<String, String> folder2Files = getFilesWithHashes(folderPath2);
+
+            compareFolders(folder1Files, folder2Files);
+        } catch (Exception e) {
+            System.err.println("An error occurred: " + e.getMessage());
+        }
+    }
+
+    // Recursively get all file paths and their hashes
+    public static Map<String, String> getFilesWithHashes(String folderPath) throws Exception {
+        Map<String, String> fileHashMap = new HashMap<>();
+        Files.walk(Paths.get(folderPath)).forEach(path -> {
+            File file = path.toFile();
+            if (file.isFile()) {
+                try {
+                    String relativePath = path.toString().substring(folderPath.length());
+                    fileHashMap.put(relativePath, getFileChecksum(file));
+                } catch (Exception e) {
+                    System.err.println("Error hashing file: " + file.getAbsolutePath());
+                }
+            }
+        });
+        return fileHashMap;
+    }
+
+    // Compute MD5 checksum of a file
+    public static String getFileChecksum(File file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("MD5");
+        try (InputStream fis = new FileInputStream(file)) {
+            byte[] byteArray = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fis.read(byteArray)) != -1) {
+                digest.update(byteArray, 0, bytesRead);
+            }
+        }
+        byte[] hashBytes = digest.digest();
+        StringBuilder sb = new StringBuilder();
+        for (byte b : hashBytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+
+    // Compare the two folder file hashes
+    public static void compareFolders(Map<String, String> folder1, Map<String, String> folder2) {
+        Set<String> allFiles = new HashSet<>();
+        allFiles.addAll(folder1.keySet());
+        allFiles.addAll(folder2.keySet());
+
+        for (String relativePath : allFiles) {
+            String hash1 = folder1.get(relativePath);
+            String hash2 = folder2.get(relativePath);
+
+            if (hash1 == null) {
+                System.out.println("New file in Folder 2: " + relativePath);
+            } else if (hash2 == null) {
+                System.out.println("File missing in Folder 2: " + relativePath);
+            } else if (!hash1.equals(hash2)) {
+                System.out.println("Updated file: " + relativePath);
+            } else {
+                System.out.println("Unchanged file: " + relativePath);
+            }
+        }
+    }
+}
