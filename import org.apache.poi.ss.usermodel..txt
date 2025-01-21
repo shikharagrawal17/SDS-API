@@ -1,0 +1,111 @@
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+public class ExcelMapComparator {
+
+    public static void compareMaps(Map<String[], String[]> map1, Map<String[], String[]> map2, String excelFilePath, String delimiter) throws IOException {
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Comparison Results");
+
+        // Create header row
+        Row headerRow = sheet.createRow(0);
+        headerRow.createCell(0).setCellValue("Keys");
+        headerRow.createCell(1).setCellValue("Comments");
+
+        int rowIndex = 1;
+
+        // Keys in File1 but not in File2
+        for (String[] key1 : map1.keySet()) {
+            if (!containsKey(map2, key1)) {
+                Row row = sheet.createRow(rowIndex++);
+                row.createCell(0).setCellValue(String.join(delimiter, key1));
+                row.createCell(1).setCellValue("Exists only in File1");
+            }
+        }
+
+        // Keys in File2 but not in File1
+        for (String[] key2 : map2.keySet()) {
+            if (!containsKey(map1, key2)) {
+                Row row = sheet.createRow(rowIndex++);
+                row.createCell(0).setCellValue(String.join(delimiter, key2));
+                row.createCell(1).setCellValue("Exists only in File2");
+            }
+        }
+
+        // Compare values for matching keys
+        for (String[] key : map1.keySet()) {
+            if (containsKey(map2, key)) {
+                String[] value1 = map1.get(key);
+                String[] value2 = findValueByKey(map2, key);
+
+                if (!Arrays.equals(value1, value2)) {
+                    Row row = sheet.createRow(rowIndex++);
+                    row.createCell(0).setCellValue(String.join(delimiter, key));
+
+                    // Identify mismatched indices
+                    StringBuilder comment = new StringBuilder("Mismatched values (indices: ");
+                    for (int i = 0; i < Math.max(value1.length, value2.length); i++) {
+                        if (i >= value1.length || i >= value2.length || !value1[i].equals(value2[i])) {
+                            comment.append(i).append(", ");
+                        }
+                    }
+                    comment.delete(comment.length() - 2, comment.length()); // Remove trailing comma and space
+                    comment.append(")");
+                    row.createCell(1).setCellValue(comment.toString());
+                }
+            }
+        }
+
+        // Write to Excel file
+        try (FileOutputStream fileOut = new FileOutputStream(excelFilePath)) {
+            workbook.write(fileOut);
+        }
+
+        workbook.close();
+        System.out.println("Comparison results written to Excel file: " + excelFilePath);
+    }
+
+    private static boolean containsKey(Map<String[], String[]> map, String[] key) {
+        for (String[] existingKey : map.keySet()) {
+            if (Arrays.equals(existingKey, key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String[] findValueByKey(Map<String[], String[]> map, String[] key) {
+        for (Map.Entry<String[], String[]> entry : map.entrySet()) {
+            if (Arrays.equals(entry.getKey(), key)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    public static void main(String[] args) throws IOException {
+        // Example data for testing
+        Map<String[], String[]> map1 = new HashMap<>();
+        map1.put(new String[]{"Key1", "SubKey1"}, new String[]{"Value1", "Value2"});
+        map1.put(new String[]{"Key2", "SubKey2"}, new String[]{"Value3", "Value4"});
+        map1.put(new String[]{"Key3", "SubKey3"}, new String[]{"Value5", "Value6"});
+
+        Map<String[], String[]> map2 = new HashMap<>();
+        map2.put(new String[]{"Key1", "SubKey1"}, new String[]{"Value1", "Value2"});
+        map2.put(new String[]{"Key2", "SubKey2"}, new String[]{"Value3", "MismatchValue"});
+        map2.put(new String[]{"Key4", "SubKey4"}, new String[]{"Value7", "Value8"});
+
+        // Output file path
+        String excelFilePath = "comparison_results.xlsx";
+        String delimiter = "|~|"; // Specify your delimiter here
+
+        // Compare the maps and write results to Excel
+        compareMaps(map1, map2, excelFilePath, delimiter);
+    }
+}
