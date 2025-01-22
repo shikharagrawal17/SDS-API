@@ -1,0 +1,71 @@
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class ReplaceAllDatesWithFormats {
+
+    public static String replaceAllDatesWithFormat(String inputString) {
+        // Define possible date format patterns in the input strings
+        String[] datePatterns = {
+            "\\d{8}",    // Matches DDMMYYYY or MMDDYYYY
+            "\\d{6}",    // Matches DDMMYY or MMDDYY
+            "\\d{2}-\\d{2}-\\d{4}", // Matches DD-MM-YYYY
+            "\\d{2}-\\d{2}-\\d{2}", // Matches DD-MM-YY
+            "\\d{4}/\\d{2}/\\d{2}", // Matches YYYY/MM/DD
+            "\\d{2}/\\d{2}/\\d{4}"  // Matches DD/MM/YYYY
+        };
+
+        // Define possible date formats and their corresponding patterns
+        String[][] formatMappings = {
+            {"ddMMyyyy", "\\d{8}"},
+            {"MMddyyyy", "\\d{8}"},
+            {"yyyyMMdd", "\\d{8}"},
+            {"dd-MM-yyyy", "\\d{2}-\\d{2}-\\d{4}"},
+            {"dd-MM-yy", "\\d{2}-\\d{2}-\\d{2}"},
+            {"MMddyy", "\\d{6}"},
+            {"yyyy/MM/dd", "\\d{4}/\\d{2}/\\d{2}"},
+            {"dd/MM/yyyy", "\\d{2}/\\d{2}/\\d{4}"}
+        };
+
+        // Iterate through each pattern and replace matching dates
+        for (String[] mapping : formatMappings) {
+            String format = mapping[0];
+            String regex = mapping[1];
+
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(inputString);
+
+            while (matcher.find()) {
+                String matchedDate = matcher.group(); // Extract the matched date
+
+                // Try to parse the matched date using its format
+                try {
+                    SimpleDateFormat formatter = new SimpleDateFormat(format);
+                    formatter.setLenient(false); // Ensure strict date parsing
+                    Date testDate = formatter.parse(matchedDate);
+
+                    // If successfully parsed, replace the date with its format pattern
+                    inputString = inputString.replace(matchedDate, format.toUpperCase());
+                } catch (ParseException ignored) {
+                    // Skip invalid matches
+                }
+            }
+        }
+
+        return inputString;
+    }
+
+    public static void main(String[] args) {
+        // Example usage
+        String inputString1 = "Hello_World-test,123t_08012025_080125_2025/01/08";
+        String inputString2 = "Dates: 01-02-2025 and 01022025, plus 25/01/2025.";
+
+        System.out.println(replaceAllDatesWithFormat(inputString1));
+        // Expected: Hello_World-test,123t_DDMMYYYY_DDMMYY_YYYY/MM/DD
+
+        System.out.println(replaceAllDatesWithFormat(inputString2));
+        // Expected: Dates: DD-MM-YYYY and DDMMYYYY, plus DD/MM/YYYY.
+    }
+}
