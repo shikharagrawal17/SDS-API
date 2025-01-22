@@ -1,0 +1,80 @@
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class ReplaceSpecificDateWithExtendedFormats {
+
+    public static String replaceSpecificDate(String inputString, String inputDate) {
+        // Known input date format
+        String inputDateFormat = "dd-MM-yyyy";
+
+        // Parse the input date into a Date object
+        Date targetDate;
+        try {
+            SimpleDateFormat inputFormatter = new SimpleDateFormat(inputDateFormat);
+            targetDate = inputFormatter.parse(inputDate);
+        } catch (ParseException e) {
+            System.err.println("Invalid input date: " + e.getMessage());
+            return inputString; // Return as is if the input date is invalid
+        }
+
+        // Define possible date format patterns and corresponding regex
+        String[][] formatMappings = {
+            {"yyyyMMdd", "\\d{8}"},          // YYYYMMDD
+            {"yyyy-MM-dd", "\\d{4}-\\d{2}-\\d{2}"}, // YYYY-MM-DD
+            {"ddMMyy", "\\d{6}"},           // DDMMYY
+            {"dd-MM-yy", "\\d{2}-\\d{2}-\\d{2}"}, // DD-MM-YY
+            {"MMddyyyy", "\\d{8}"},         // MMDDYYYY
+            {"MMddyy", "\\d{6}"},           // MMDDYY
+            {"dd-MM-yyyy", "\\d{2}-\\d{2}-\\d{4}"}, // DD-MM-YYYY
+            {"yyyy/MM/dd", "\\d{4}/\\d{2}/\\d{2}"}, // YYYY/MM/DD
+            {"dd/MM/yyyy", "\\d{2}/\\d{2}/\\d{4}"}, // DD/MM/YYYY
+        };
+
+        // Iterate through each format mapping
+        for (String[] mapping : formatMappings) {
+            String format = mapping[0];
+            String regex = mapping[1];
+
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(inputString);
+
+            while (matcher.find()) {
+                String matchedDate = matcher.group(); // Extract the matched date
+
+                // Try to parse the matched date using the corresponding format
+                try {
+                    SimpleDateFormat formatter = new SimpleDateFormat(format);
+                    formatter.setLenient(false); // Strict date parsing
+                    Date matchedParsedDate = formatter.parse(matchedDate);
+
+                    // If the matched date equals the input date, replace it
+                    if (matchedParsedDate.equals(targetDate)) {
+                        inputString = inputString.replace(matchedDate, format.toUpperCase());
+                    }
+                } catch (ParseException ignored) {
+                    // Skip invalid matches
+                }
+            }
+        }
+
+        return inputString;
+    }
+
+    public static void main(String[] args) {
+        // Input date to match
+        String inputDate = "09-01-2025";
+
+        // Example input strings
+        String inputString1 = "Test_20250109_080125_09-01-25";
+        String inputString2 = "Events: 2025-01-09 and 090125, plus 09/01/2025.";
+
+        System.out.println(replaceSpecificDate(inputString1, inputDate));
+        // Expected: Test_YYYYMMDD_080125_DD-MM-YY
+
+        System.out.println(replaceSpecificDate(inputString2, inputDate));
+        // Expected: Events: YYYY-MM-DD and 090125, plus DD/MM/YYYY.
+    }
+}
