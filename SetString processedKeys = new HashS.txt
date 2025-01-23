@@ -1,0 +1,37 @@
+Set<String> processedKeys = new HashSet<>();
+
+    // Iterate over the union of keys from both maps
+    for (String[] key : Stream.concat(map1.keySet().stream(), map2.keySet().stream()).collect(Collectors.toSet())) {
+        String keyString = String.join(delimiter, key);
+
+        if (processedKeys.contains(keyString)) {
+            continue; // Skip already processed keys
+        }
+
+        processedKeys.add(keyString); // Mark the key as processed
+
+        String[] value1 = map1.getOrDefault(key, null);
+        String[] value2 = map2.getOrDefault(key, null);
+
+        // Compare and write results to Excel
+        Row row = sheet.createRow(rowIndex++);
+        row.createCell(0).setCellValue(keyString);
+
+        if (value1 == null) {
+            row.createCell(1).setCellValue("Exists only in File2");
+        } else if (value2 == null) {
+            row.createCell(1).setCellValue("Exists only in File1");
+        } else if (!areValuesEqual(value1, value2, indicesToSkip)) {
+            // Log mismatched indices
+            StringBuilder comment = new StringBuilder("Mismatch at index: ");
+            for (int i = 0; i < Math.max(value1.length, value2.length); i++) {
+                if (indicesToSkip.contains(i)) continue; // Skip specified indices
+
+                if (i >= value1.length || i >= value2.length || !value1[i].equals(value2[i])) {
+                    comment.append(i).append(", ");
+                }
+            }
+            comment.delete(comment.length() - 2, comment.length()); // Remove trailing comma and space
+            row.createCell(1).setCellValue(comment.toString());
+        }
+    }
