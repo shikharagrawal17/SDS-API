@@ -1,0 +1,66 @@
+import java.io.*;
+import java.util.*;
+
+public class FileToMapProcessor {
+
+    public static Map<Map<String, String>, Map<String, String>> processFiles(
+            String filePath, List<String> primaryKeys) throws IOException {
+
+        Map<Map<String, String>, Map<String, String>> resultMap = new LinkedHashMap<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String headerLine = reader.readLine();
+            if (headerLine == null) {
+                throw new IOException("File is empty");
+            }
+
+            // Split the headers
+            String[] headers = headerLine.split(",");
+            List<Integer> primaryKeyIndices = new ArrayList<>();
+            List<Integer> otherIndices = new ArrayList<>();
+
+            // Identify indices for primary keys and other columns
+            for (int i = 0; i < headers.length; i++) {
+                if (primaryKeys.contains(headers[i])) {
+                    primaryKeyIndices.add(i);
+                } else {
+                    otherIndices.add(i);
+                }
+            }
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] values = line.split(",");
+
+                // Build the primary key map
+                Map<String, String> primaryKeyMap = new LinkedHashMap<>();
+                for (int index : primaryKeyIndices) {
+                    primaryKeyMap.put(headers[index], values[index]);
+                }
+
+                // Build the other columns map
+                Map<String, String> otherColumnsMap = new LinkedHashMap<>();
+                for (int index : otherIndices) {
+                    otherColumnsMap.put(headers[index], values[index]);
+                }
+
+                // Add to the result map
+                resultMap.put(primaryKeyMap, otherColumnsMap);
+            }
+        }
+
+        return resultMap;
+    }
+
+    public static void main(String[] args) {
+        String filePath = "file1.csv";
+        List<String> primaryKeys = Arrays.asList("ID", "Name"); // Define your primary keys here
+
+        try {
+            Map<Map<String, String>, Map<String, String>> result = processFiles(filePath, primaryKeys);
+            System.out.println(result);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
