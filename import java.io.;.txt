@@ -1,66 +1,107 @@
-import java.io.*;
 import java.util.*;
 
-public class FileToMapProcessor {
+public class OuterMapComparator {
 
-    public static Map<Map<String, String>, Map<String, String>> processFiles(
-            String filePath, List<String> primaryKeys) throws IOException {
+    /**
+     * Compare inner maps for a given key and output the results.
+     *
+     * @param key  The outer map key being compared.
+     * @param map1 The inner map corresponding to the key in the first outer map.
+     * @param map2 The inner map corresponding to the key in the second outer map.
+     */
+    public static void compareInnerMaps(String key, Map<String, String> map1, Map<String, String> map2) {
+        // Lists to store comparison results
+        List<String> valueMismatches = new ArrayList<>();
+        List<String> headersOnlyInMap1 = new ArrayList<>();
+        List<String> headersOnlyInMap2 = new ArrayList<>();
 
-        Map<Map<String, String>, Map<String, String>> resultMap = new LinkedHashMap<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String headerLine = reader.readLine();
-            if (headerLine == null) {
-                throw new IOException("File is empty");
-            }
-
-            // Split the headers
-            String[] headers = headerLine.split(",");
-            List<Integer> primaryKeyIndices = new ArrayList<>();
-            List<Integer> otherIndices = new ArrayList<>();
-
-            // Identify indices for primary keys and other columns
-            for (int i = 0; i < headers.length; i++) {
-                if (primaryKeys.contains(headers[i])) {
-                    primaryKeyIndices.add(i);
-                } else {
-                    otherIndices.add(i);
-                }
-            }
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] values = line.split(",");
-
-                // Build the primary key map
-                Map<String, String> primaryKeyMap = new LinkedHashMap<>();
-                for (int index : primaryKeyIndices) {
-                    primaryKeyMap.put(headers[index], values[index]);
-                }
-
-                // Build the other columns map
-                Map<String, String> otherColumnsMap = new LinkedHashMap<>();
-                for (int index : otherIndices) {
-                    otherColumnsMap.put(headers[index], values[index]);
-                }
-
-                // Add to the result map
-                resultMap.put(primaryKeyMap, otherColumnsMap);
+        // Compare headers in map1
+        for (String header : map1.keySet()) {
+            if (!map2.containsKey(header)) {
+                headersOnlyInMap1.add(header);
+            } else if (!Objects.equals(map1.get(header), map2.get(header))) {
+                valueMismatches.add(header + " (Map1: " + map1.get(header) + ", Map2: " + map2.get(header) + ")");
             }
         }
 
-        return resultMap;
+        // Compare headers in map2
+        for (String header : map2.keySet()) {
+            if (!map1.containsKey(header)) {
+                headersOnlyInMap2.add(header);
+            }
+        }
+
+        // Print the results for the key
+        System.out.println(key + ":");
+        if (!valueMismatches.isEmpty()) {
+            System.out.println("Mismatch Value for: " + valueMismatches);
+        } else {
+            System.out.println("No value mismatches.");
+        }
+        if (!headersOnlyInMap1.isEmpty()) {
+            System.out.println("Headers only in Map 1: " + headersOnlyInMap1);
+        }
+        if (!headersOnlyInMap2.isEmpty()) {
+            System.out.println("Headers only in Map 2: " + headersOnlyInMap2);
+        }
+        System.out.println();
+    }
+
+    /**
+     * Compare two outer maps and handle all scenarios.
+     *
+     * @param outerMap1 The first outer map.
+     * @param outerMap2 The second outer map.
+     */
+    public static void compareOuterMaps(
+            Map<String, Map<String, String>> outerMap1,
+            Map<String, Map<String, String>> outerMap2) {
+        // Find keys in both outer maps
+        Set<String> allKeys = new HashSet<>();
+        allKeys.addAll(outerMap1.keySet());
+        allKeys.addAll(outerMap2.keySet());
+
+        for (String key : allKeys) {
+            if (outerMap1.containsKey(key) && outerMap2.containsKey(key)) {
+                // Key exists in both maps; compare inner maps
+                compareInnerMaps(key, outerMap1.get(key), outerMap2.get(key));
+            } else if (outerMap1.containsKey(key)) {
+                // Key exists only in Map 1
+                System.out.println(key + ": Key only in Map 1");
+            } else if (outerMap2.containsKey(key)) {
+                // Key exists only in Map 2
+                System.out.println(key + ": Key only in Map 2");
+            }
+        }
     }
 
     public static void main(String[] args) {
-        String filePath = "file1.csv";
-        List<String> primaryKeys = Arrays.asList("ID", "Name"); // Define your primary keys here
+        // Example Outer Maps
+        Map<String, Map<String, String>> outerMap1 = new LinkedHashMap<>();
+        Map<String, Map<String, String>> outerMap2 = new LinkedHashMap<>();
 
-        try {
-            Map<Map<String, String>, Map<String, String>> result = processFiles(filePath, primaryKeys);
-            System.out.println(result);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // Add data to outerMap1
+        outerMap1.put("Hello|Moto|2025", Map.of(
+                "Head1", "Val1",
+                "Head2", "Val2",
+                "Head3", "Val3"
+        ));
+        outerMap1.put("KeyOnlyInMap1", Map.of(
+                "HeadA", "ValA"
+        ));
+
+        // Add data to outerMap2
+        outerMap2.put("Hello|Moto|2025", Map.of(
+                "Head2", "Val2",
+                "Head3", "Val3",
+                "Head1", "Val4",  // Mismatch
+                "Head5", "Val5"   // Only in Map 2
+        ));
+        outerMap2.put("KeyOnlyInMap2", Map.of(
+                "HeadB", "ValB"
+        ));
+
+        // Compare the outer maps
+        compareOuterMaps(outerMap1, outerMap2);
     }
 }
